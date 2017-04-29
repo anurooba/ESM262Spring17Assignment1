@@ -20,7 +20,7 @@ climate=read.table("clim.txt", header = TRUE)
 
 # Aggregate the data by month and year to calculate the mean of the max and min temperatures
 
-View(climate) # This is not in the Rmarkdown report by gets generated while knitting.
+#View(climate) # If included, this is not in the Rmarkdown report by gets generated while knitting.
 
 ClimateAggData <- aggregate(climate,by=list(climate$month,climate$year),FUN="mean")
 ClimateAggData$mean <- (ClimateAggData$tmin+ClimateAggData$tmax)/2
