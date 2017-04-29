@@ -1,0 +1,202 @@
+---
+title: "Climate Data Assignment"
+author: "Anu Balakrishnan"
+date: "4/29/2017"
+output: html_document
+---
+
+```{r climate, eval=TRUE, echo=TRUE, warning=FALSE}
+
+# Reading data from file clim.txt into vector Climatedata
+# And View the data in the table format
+
+climate=read.table("clim.txt", header = TRUE)
+
+# Rearrange the data so that the temperature and precipitation can be averaged over month and year.
+# It is relatively easy to collapse data in R using one or more BY variables and a defined function.
+# aggregate data frame climate by years and months, returning means for numeric variables
+# More information and example  @ http://www.statmethods.net/management/aggregate.html
+# After aggregating the group columns are added to the table, hence the column reference should be based on the aggredate data table rather than the original table.
+
+# Aggregate the data by month and year to calculate the mean of the max and min temperatures
+
+View(climate) # This is not in the Rmarkdown report by gets generated while knitting.
+
+ClimateAggData <- aggregate(climate,by=list(climate$month,climate$year),FUN="mean")
+ClimateAggData$mean <- (ClimateAggData$tmin+ClimateAggData$tmax)/2
+
+# Monthly Average Temperature Boxplot calculated for years from 1942 to 2016
+
+boxplot(ClimateAggData$mean~ClimateAggData$month,
+  ylab="Average Temperature from 1942 to 2016 \n in Degree Celsius",
+  xlab="Month", col="#e6e6e6")
+
+# Aggregate the data by month and year to calculate the sum of rainfall per month
+
+climate2 <- climate[,2:7]
+
+ClimateRainSumData <- aggregate(climate2, by=list(climate2$month,climate2$year), FUN="sum")
+
+#Monthly Total Precipitation Boxplot for years from 1942 to 2016
+
+boxplot(ClimateRainSumData$rain~ClimateAggData$month,
+  ylab="Total Precipitation from 1942 to 2016 in centimeters",
+  xlab="Month", col="#e6e6e6")
+
+# Aggregate the data by year to calculate the sum of rainfall per year
+
+ClimateYearData<- aggregate(climate2, by=list(climate2$year), FUN="sum")
+
+# Wettest Year (year of maximum rainfall) and Driest Year (Year of minimum rainfall)
+
+# Based on the aggragate data for year, find out the year with maximum and year with minimum rainfall. This is done by using the command which.max and which.min 
+# More about Which.max and which.min @ https://www.rdocumentation.org/packages/base/versions/3.3.3/topics/which.min
+
+#location of the year with maximum rainfall in the data frame
+
+wettestyear=which.max(ClimateYearData$rain)
+ 
+# Display the complete the record
+
+ClimateYearData[wettestyear,]
+
+#type cast the rain amount 
+
+ClimateYearData$year=as.integer(ClimateYearData$Group.1)
+ClimateYearData$rain=as.integer(ClimateYearData$rain)
+
+# Display the year of maximum rain and amount of Rain
+
+ClimateYearData[wettestyear,c("year","rain")] 
+
+#location of the year with minimum rainfall in the data frame
+
+driestyear=which.min(ClimateYearData$rain)
+
+# Display the complete the record
+
+ClimateYearData[driestyear,]
+
+#type cast the rain amount 
+
+ClimateYearData$year=as.integer(ClimateYearData$Group.1)
+ClimateYearData$rain=as.integer(ClimateYearData$rain)
+
+# Display the year of minimum rain and amount of rain
+
+ClimateYearData[driestyear,c("year","rain")]
+
+```
+
+## Lake when rain is in abundance
+<div align="center">
+<img src = "wet.jpg" height=400>
+</div>
+
+
+
+## Lake when there is no rain
+<div align="center">
+<img src = "dry.jpg" height=400>
+</div>
+
+#Climate Analysis based on Seasonal Changes
+
+```{r eval=TRUE, echo=TRUE, warning=FALSE}
+
+# creating seasons - group by certain months . Spring is 1, Summer is 2, Fall is 3, Winter is 4
+
+climate2$Season <- ifelse(climate2$month <= 5 & climate2$month >= 3, 1, ifelse(climate2$month <= 8, 2,(ifelse(climate2$month <= 11, 3, 4))))
+
+# Wettest Season (season of maximum rainfall) and Driest Season (season of minimum rainfall)
+
+# Aggregate the data by season and year to calculate the sum of rainfall per season
+
+ClimateSeasonAgg<- aggregate(climate2,by=list(climate2$Season,climate2$year),FUN="sum")
+
+#location of the season with maximum rainfall in the dataframe
+
+WettestSeason=which.max(ClimateSeasonAgg$rain)
+
+# Display the complete the record
+
+ClimateSeasonAgg[WettestSeason,]
+
+#type cast the rain amount 
+
+ClimateSeasonAgg$Season=as.integer(ClimateSeasonAgg$Group.1)
+ClimateSeasonAgg$year=as.integer(ClimateSeasonAgg$Group.2)
+ClimateSeasonAgg$rain=as.integer(ClimateSeasonAgg$rain)
+
+# Display the season of maximum rain and amount of Rain
+
+ClimateSeasonAgg[WettestSeason,c("Season","year","rain")]
+
+#location of the season with minimum rainfall on the data frame
+
+DriestSeason=which.min(ClimateSeasonAgg$rain)
+
+# Display the complete the record
+
+ClimateSeasonAgg[DriestSeason,]
+
+#type cast the rain amount 
+
+ClimateSeasonAgg$Season=as.integer(ClimateSeasonAgg$Group.1)
+ClimateSeasonAgg$year=as.integer(ClimateSeasonAgg$Group.2)
+ClimateSeasonAgg$rain=as.integer(ClimateSeasonAgg$rain)
+
+# Display the season of minimum rain and amount of rain
+
+ClimateSeasonAgg[DriestSeason,c("Season","year","rain")]
+
+## Relationship between Winter Precipitation and Summer Temperature 
+
+PrecipSeasonAgg <- aggregate(climate2, by=list(climate2$Season, climate2$year), FUN="mean")
+
+# Calculate the average temperature of the season per year
+
+PrecipSeasonAgg$Temperature <- (PrecipSeasonAgg$tmax + PrecipSeasonAgg$tmin)/2
+
+# Consider only the Summer
+
+SummerTemp <- subset(PrecipSeasonAgg, Season == 2)
+
+#Consider only two attributes year and temperature from the data for summer
+
+SummerTemp1 <- SummerTemp[,c(2,10)]
+
+#Rename the column name
+colnames(SummerTemp1) <- c("Year", "Temperature")
+
+
+# Consider only the Winter
+
+WinterPrecip <- subset(PrecipSeasonAgg, Season == 4)
+
+#Consider only two attributes year and precipitation from the data for summer
+
+WinterPrecip1 <- WinterPrecip[,c(2,5)]
+
+#Rename the column name
+colnames(WinterPrecip1) <- c("Year", "Precipitation")
+
+# Merge summer and winter data from table.
+CompareTempPrecip <- merge(SummerTemp1, WinterPrecip1,by="Year")
+
+library(ggplot2)
+
+ggplot(CompareTempPrecip, aes(Temperature, Precipitation))+
+     geom_point(shape=1, color="darkred", size=2)+
+     labs(title="Relationship between Winter Precipitation & Summer Temerature (1942- 2016)", x="Temperature in Celcius", y ="Precipitation in Centimeters", family="Times New Roman") +
+     theme_bw() +
+     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+## Relationship Analysis Based on the above figure
+
+# Although there are some outliers , high precipitation at low temperatures and low precipitation at high temperatures, based on the above graph we can say that at mid temperatures there are ample chances of precipitation both light and heavy included. Hence providing an insight as to how any year with summers with non extreme temperature fluxes indicates rainfall in winters for those years.
+
+
+```
+
+
